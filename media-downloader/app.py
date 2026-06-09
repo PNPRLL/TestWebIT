@@ -17,7 +17,10 @@ def extract_media():
     if not url:
         return jsonify({'error': 'กรุณาใส่ลิงก์ที่ต้องการดาวน์โหลด'}), 400
 
-    # 🕵️‍♂️ ตั้งค่าพรางตัวเป็นเบราว์เซอร์ทั่วไป เพื่อแก้ปัญหา Login Wall ของ IG บนเซิร์ฟเวอร์ Cloud
+    # ค้นหาไฟล์ cookies.txt ในโฟลเดอร์โปรเจกต์
+    cookie_path = os.path.join(os.path.dirname(__file__), 'cookies.txt')
+
+    # ตั้งค่าพรางตัวเบื้องต้น
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
@@ -25,36 +28,37 @@ def extract_media():
         'http_headers': {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Language': 'th,en-US;q=0.7,en;q=0.3',
             'Sec-Fetch-Mode': 'navigate',
         }
     }
+
+    # 🔑 ถ้ามีไฟล์ cookies.txt ระบบจะนำมาใช้ทะลุกำแพงบล็อกของ IG ทันที
+    if os.path.exists(cookie_path):
+        ydl_opts['cookiefile'] = cookie_path
+        print("💡ระบบ: กำลังใช้ไฟล์ cookies.txt ในการดึงข้อมูล...")
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             media_list = []
 
-            # ฟังก์ชันช่วยแกะลิงก์รูปภาพและวิดีโอให้แม่นยำ
             def parse_item(item):
                 is_video = item.get('ext') == 'mp4' or item.get('vcodec') != 'none'
                 m_type = 'video' if is_video else 'image'
                 
-                # ค้นหาลิงก์ตรงสำหรับดาวน์โหลดไฟล์ดิบ
                 dl_url = item.get('url')
                 if not dl_url and item.get('formats'):
                     dl_url = item['formats'][-1].get('url')
                 if not dl_url and item.get('thumbnails'):
                     dl_url = item['thumbnails'][-1].get('url')
                     
-                # ค้นหารูปภาพพรีวิว (Thumbnail)
                 thumb = item.get('thumbnail')
                 if not thumb and item.get('thumbnails'):
                     thumb = item['thumbnails'][-1].get('url')
                     
                 return {'type': m_type, 'thumbnail': thumb or dl_url, 'url': dl_url}
 
-            # ตรวจสอบว่าเป็นอัลบั้มภาพกลุ่ม (entries) หรือโพสต์เดี่ยว
             if 'entries' in info:
                 for entry in info['entries']:
                     parsed = parse_item(entry)
@@ -66,14 +70,14 @@ def extract_media():
                     media_list.append(parsed)
 
             if not media_list:
-                return jsonify({'error': 'ไม่พบสื่อ หรือระบบถูกปิดกั้นการเข้าถึง'}), 404
+                return jsonify({'error': 'ไม่พบสื่อ หรือเซิร์ฟเวอร์ปฏิเสธการเข้าถึง'}), 404
 
             return jsonify({'status': 'success', 'media': media_list})
 
     except Exception as e:
-        return jsonify({'error': 'ดึงข้อมูลไม่สำเร็จ (IG ปิดกั้น IP ของเซิร์ฟเวอร์ หรือลิงก์ไม่ถูกต้อง)'}), 500
+        # แสดงข้อผิดพลาดสั้นๆ ป้องกันหน้าเว็บพัง
+        return jsonify({'error': 'ระบบดึงข้อมูลไม่สำเร็จเนื่องจากมาตรการความปลอดภัยของ IG (แนะนำให้ตรวจสอบคุกกี้ระบบ)'}), 500
 
-# 📥 ระบบตัวกลางดาวน์โหลดตรง (แก้ปัญหาลิ้งก์ภาพหาย/ช่วยบังคับเซฟลงเครื่องทันที)
 @app.route('/download-direct')
 def download_direct():
     url = request.args.get('url')
