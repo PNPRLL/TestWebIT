@@ -52,7 +52,6 @@ def extract_media():
     except Exception as e:
         return jsonify({'error': 'ดึงข้อมูลไม่สำเร็จ (บัญชีอาจเป็น Private หรือเซิร์ฟเวอร์ IG ปิดกั้น)'}), 500
 
-# โค้ดส่วนนี้สำคัญมากสำหรับการนำขึ้นออนไลน์
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)

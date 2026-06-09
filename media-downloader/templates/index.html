@@ -39,7 +39,7 @@
         <div id="media-preview" class="hidden mt-8 pt-6 border-t border-slate-800">
             <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 text-center">⬇️ ผลลัพธ์การค้นหา</h3>
             <div id="media-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                </div>
+            </div>
         </div>
     </div>
 
@@ -97,13 +97,12 @@
                         imgBox.appendChild(img);
                         imgBox.appendChild(badge);
 
-                        // ปุ่มดาวน์โหลด (เปิดลิงก์ตรงไปยัง CDN)
                         const dlBox = document.createElement('div');
                         dlBox.className = "p-3 bg-slate-800";
                         
                         const dlBtn = document.createElement('a');
                         dlBtn.href = item.url;
-                        dlBtn.target = "_blank"; // ให้เปิดแท็บใหม่เพื่อดาวน์โหลด
+                        dlBtn.target = "_blank"; 
                         dlBtn.className = "block w-full text-center bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 text-white font-semibold py-2 rounded-lg text-sm transition-all";
                         dlBtn.innerHTML = "📥 ดาวน์โหลด";
 
